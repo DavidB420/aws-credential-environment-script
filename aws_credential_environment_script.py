@@ -1,9 +1,9 @@
 import json
 import sys
-import boto3
 import subprocess
 import configparser
 import os
+from pathlib import Path
 
 def runCmd(cmd: str, output=True):
     try:
@@ -36,7 +36,18 @@ def main():
     #Read data from json file
     print(f"\nReading credentials from profile {profileName}...")
     savedOutput = runCmd(f"aws configure export-credentials --profile {profileName}",output=True)
-    print(f"Recovered JSON: ")
+    print(f"Recovered JSON: {savedOutput}")
+    jsonSavedOutput = json.loads(savedOutput)
+    #saves to a .env at the current directory, change if needed
+    envPath = Path(".env")
+    with envPath.open("w") as f:
+        f.write(f"AWS_ACCESS_KEY_ID={jsonSavedOutput['AccessKeyId']}\n")
+        f.write(f"AWS_SECRET_ACCESS_KEY={jsonSavedOutput['SecretAccessKey']}\n")
+        f.write(f"AWS_SESSION_TOKEN={jsonSavedOutput.get('SessionToken','')}\n")
+        f.write(f"AWS_REGION={jsonSavedOutput.get('Region','') if jsonSavedOutput.get('Region','') else "ca-central-1"}\n")
+
+    print("\nCompleted!")
+
 
 
 
