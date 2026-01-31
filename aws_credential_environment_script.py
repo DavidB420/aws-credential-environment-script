@@ -1,3 +1,6 @@
+#AWS credential to enviornment file script
+#Written by David Badiei, 2026
+
 import json
 import sys
 import subprocess
@@ -6,6 +9,7 @@ import os
 from pathlib import Path
 
 def runCmd(cmd: str, output=True):
+    #Run shell command
     try:
         result = subprocess.run(cmd,shell=True,capture_output=output,text=True,check=True)
         return result.stdout.strip() if output else None
@@ -14,6 +18,7 @@ def runCmd(cmd: str, output=True):
         sys.exit(1)
 
 def getProfile():
+    #Should return first (default) profile, otherwise just return default
     config = configparser.ConfigParser()
     config.read(os.path.expanduser("~/.aws/config"))
     profiles = [s.replace("profile ", "") for s in config.sections() if s.startswith("profile ")]
@@ -47,8 +52,5 @@ def main():
         f.write(f"AWS_REGION={jsonSavedOutput.get('Region','') if jsonSavedOutput.get('Region','') else "ca-central-1"}\n")
 
     print("\nCompleted!")
-
-
-
 
 main()
