@@ -43,13 +43,24 @@ def main():
     savedOutput = runCmd(f"aws configure export-credentials --profile {profileName}",output=True)
     print(f"Recovered JSON: {savedOutput}")
     jsonSavedOutput = json.loads(savedOutput)
-    #saves to a .env at the current directory, change if needed
-    envPath = Path(".env")
+    #saves to a .env at the current directory while saving existing vars, change if needed
+    newVars = {"AWS_ACCESS_KEY_ID": jsonSavedOutput["AccessKeyId"],
+        "AWS_SECRET_ACCESS_KEY": jsonSavedOutput["SecretAccessKey"],
+        "AWS_SESSION_TOKEN": jsonSavedOutput.get("SessionToken", ""),
+        "AWS_REGION": jsonSavedOutput.get("Region") or "ca-central-1"
+    }
+    varsToSave = {}
+    envPath = Path(".env")  
+    #Check for existing vars
+    if envPath.exists():
+        for line in envPath.read_text().splitlines():
+            if "=" in line and not line.strip().startswith("#"):
+                k, v = line.split("=", 1)
+                varsToSave[k] = v
+    varsToSave.update(newVars)
     with envPath.open("w") as f:
-        f.write(f"AWS_ACCESS_KEY_ID={jsonSavedOutput['AccessKeyId']}\n")
-        f.write(f"AWS_SECRET_ACCESS_KEY={jsonSavedOutput['SecretAccessKey']}\n")
-        f.write(f"AWS_SESSION_TOKEN={jsonSavedOutput.get('SessionToken','')}\n")
-        f.write(f"AWS_REGION={jsonSavedOutput.get('Region','') if jsonSavedOutput.get('Region','') else "ca-central-1"}\n")
+        for k, v in varsToSave.items():
+            f.write(f"{k}={v}\n")
 
     print("\nCompleted!")
 
